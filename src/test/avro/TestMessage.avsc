@@ -1,19 +1,15 @@
 {
   "type": "record",
-  "name": "UserScore",
-  "namespace": "com.aktv.test",
+  "name": "TestMessage",
+  "namespace": "com.levaldo.test",
   "fields": [
     {
-      "name": "advertising_id",
+      "name": "test",
       "type" : "string"
     },
     {
-      "name": "conversion_rate",
+      "name": "value",
       "type" : "double"
-    },
-    {
-      "name": "country",
-      "type" : "string"
     }
   ]
 }

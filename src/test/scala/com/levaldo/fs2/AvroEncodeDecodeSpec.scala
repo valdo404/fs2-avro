@@ -1,10 +1,10 @@
-package com.adikteev.fs2
+package com.levaldo.fs2
 
 import java.io.File
 
-import cats.effect.IO
-import com.aktv.test.TestMessage
-import fs2.Stream
+import cats.effect.{Blocker, IO}
+import com.levaldo.test.TestMessage
+import fs2.{Pure, Sink, Stream}
 import org.apache.avro.file.DataFileReader
 import org.apache.avro.generic.GenericDatumReader
 import org.specs2.matcher.{IOMatchers, ResultMatchers}
@@ -24,14 +24,20 @@ class AvroEncodeDecodeSpec extends Specification with IOMatchers with ResultMatc
 
       val ec = ExecutionContext.global
 
-      val avroPipes = SpecificPipes.apply[IO, TestMessage]
+      val avroPipes: AvroPipes[IO, TestMessage] = SpecificPipes.apply[IO, TestMessage]
 
-      Stream
-        .emits(scoreFixtures)
-        .to(avroPipes.fileThroughSink(fs2.io.file.writeAll(temp.toPath, ec), ec))
-        .compile
-        .drain
-        .unsafeRunSync()
+      val blocker = Blocker.apply[IO]
+
+      blocker.use(blocker => {
+        val ioToMessage: Sink[IO, TestMessage] = avroPipes.fileThroughSink(
+          fs2.io.file.writeAll(temp.toPath, blocker), ec)
+
+        ioToMessage(Stream
+          .emits(scoreFixtures))
+          .compile
+          .drain
+        }
+      ).unsafeRunSync()
 
       val reader: DataFileReader[Nothing] = new DataFileReader[Nothing](temp, new GenericDatumReader[Nothing])
 
@@ -39,7 +45,7 @@ class AvroEncodeDecodeSpec extends Specification with IOMatchers with ResultMatc
         .map(key => (key, reader.getMetaString(key)))
 
       metadatas must havePair(
-        "avro.schema" -> """{"type":"record","name":"TestMessage","namespace":"com.aktv.test","fields":[{"name":"test","type":"string"},{"name":"value","type":"double"}]}"""
+        "avro.schema" -> """{"type":"record","name":"TestMessage","namespace":"com.levaldo.test","fields":[{"name":"test","type":"string"},{"name":"value","type":"double"}]}"""
       )
       metadatas must havePair("avro.codec" -> "snappy")
 

@@ -1,7 +1,7 @@
-package com.adikteev.fs2
+package com.levaldo.fs2
 
 import cats.effect.IO
-import com.aktv.test.TestMessage
+import com.levaldo.test.TestMessage
 import fs2.Stream
 import org.apache.avro.file.CodecFactory
 import org.specs2.matcher.{IOMatchers, ResultMatchers}

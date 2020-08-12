@@ -1,4 +1,4 @@
-package com.adikteev.fs2
+package com.levaldo.fs2
 
 import java.lang.reflect.Field
 

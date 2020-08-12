@@ -1,4 +1,4 @@
-package com.adikteev.fs2
+package com.levaldo.fs2
 
 import java.io._
 
@@ -63,17 +63,21 @@ class AvroPipes[F[_] : ConcurrentEffect : ContextShift, R <: IndexedRecord : Cla
             emitToStream(is, writer)
         }
 
+      val blocker = Blocker[F]
       Stream
         .eval(recordPipe)
         .flatMap(stream.through)
         .flatMap {
           case (inputStream: InputStream, _) =>
-            fs2.io.unsafeReadInputStream(
-              F.pure(inputStream.asInstanceOf[InputStream]),
-              chunkSize = 1000,
-              blockingExecutionContext = blockingEc,
-              closeAfterUse = false
-            )
+            fs2.Stream.resource(blocker)
+              .flatMap(blocker =>
+                fs2.io.unsafeReadInputStream(
+                  F.pure(inputStream.asInstanceOf[InputStream]),
+                  chunkSize = 1000,
+                  blocker = blocker,
+                  closeAfterUse = false
+                )
+              )
         }
     }
   }
